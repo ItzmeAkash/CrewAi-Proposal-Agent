@@ -164,4 +164,5 @@ cython_debug/
 #.idea/
 
 #hid all the credientials
-sheetcredentials.json
+proposalagent/crewapp/tools/sheetcredentials.json
+proposalagent/crewapp/token.json
