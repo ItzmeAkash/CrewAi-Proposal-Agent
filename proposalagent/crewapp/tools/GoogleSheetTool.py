@@ -18,14 +18,21 @@ class GoogleSheetTool(BaseTool):
         try:
             # Define the required scope
             scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-
+            credentails_path = os.getenv('GOOGLE_SHEET_CREDENTIALS')
+            if not credentails_path:
+                return 'Credentials file path not set in environment varibales'
+            
             # Authenticate and create the client
-            creds = Credentials.from_service_account_file("sheetcredentials.json", scopes=scopes)
+            creds = Credentials.from_service_account_file(credentails_path, scopes=scopes)
             client = gspread.authorize(creds)
 
             # Define the Google Sheet ID
             # sheet_id = "1_k2DzIMttt7PvXg-V40_soNH6dA2-E8dG06T2uIhFgA"
-            sheet_id = "106aQX0mnIjGHeRt3tVA4-0DeRbeXsZa6i47Dg3Nzvc8"
+            sheet_id = os.getenv('GOOGLE_SHEET_ID')
+            if not sheet_id:
+                return 'Google Sheet ID not set in environment variables'
+            
+            # sheet_id = "106aQX0mnIjGHeRt3tVA4-0DeRbeXsZa6i47Dg3Nzvc8"
 
             # Open the Google Sheet
             workbook = client.open_by_key(sheet_id)
