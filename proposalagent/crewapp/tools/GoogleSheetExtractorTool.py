@@ -10,6 +10,10 @@ import pandas as pd
 import json
 from typing import List,Dict
 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CREDENTIALS_PATH = os.path.join(BASE_DIR, 'googlesheetcredentials.json')
+
 class GoogleSheetExtractorTool(BaseTool):
     name: str = "GoogleSheetExtractor"
     description: str = "Extract specific details from a Google Sheet based on the current date's worksheet."
@@ -19,12 +23,12 @@ class GoogleSheetExtractorTool(BaseTool):
             scopes = ["https://www.googleapis.com/auth/spreadsheets"]
             
             # Authenticate and create the client
-            creds = Credentials.from_service_account_file("sheetcredentials.json", scopes=scopes)
+            creds = Credentials.from_service_account_file(CREDENTIALS_PATH, scopes=scopes)
             client = gspread.authorize(creds)
             
             # Open the Google Sheet
-            # workbook = client.open_by_key("1_k2DzIMttt7PvXg-V40_soNH6dA2-E8dG06T2uIhFgA")
-            workbook = client.open_by_key("106aQX0mnIjGHeRt3tVA4-0DeRbeXsZa6i47Dg3Nzvc8")
+            workbook = client.open_by_key("1_k2DzIMttt7PvXg-V40_soNH6dA2-E8dG06T2uIhFgA")
+            # workbook = client.open_by_key("106aQX0mnIjGHeRt3tVA4-0DeRbeXsZa6i47Dg3Nzvc8")
             
             # Get the current date for the worksheet name
             worksheet_name = datetime.now().strftime("%Y-%m-%d")

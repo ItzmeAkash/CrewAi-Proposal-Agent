@@ -1,44 +1,41 @@
 import os
-from crewai import Agent, Task, Crew, Process
-from crewai_tools import PDFSearchTool, BaseTool
-from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
+from crewai_tools import BaseTool
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
-import pandas as pd
-import json
-from typing import List,Dict
+from typing import List, Dict, Union
+
+# Define the base path to the credentials file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CREDENTIALS_PATH = os.path.join(BASE_DIR, 'googlesheetcredentials.json')
 
 class GoogleSheetTool(BaseTool):
     name: str = "GoogleSheetTool"
     description: str = "Tool to store data into a Google Sheet using gspread and Google service account credentials"
 
-    def _run(self, data: List[Dict[str, str]]) -> str:
+    def _run(self, data: Union[List[Dict[str, str]], Dict[str, List[Dict[str, str]]]]) -> str:
+    
         try:
             # Define the required scope
             scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-            credentails_path = os.getenv('GOOGLE_SHEET_CREDENTIALS')
-            if not credentails_path:
-                return 'Credentials file path not set in environment varibales'
-            
+
             # Authenticate and create the client
-            creds = Credentials.from_service_account_file(credentails_path, scopes=scopes)
+            creds = Credentials.from_service_account_file(CREDENTIALS_PATH, scopes=scopes)
             client = gspread.authorize(creds)
 
             # Define the Google Sheet ID
-            # sheet_id = "1_k2DzIMttt7PvXg-V40_soNH6dA2-E8dG06T2uIhFgA"
-            sheet_id = os.getenv('GOOGLE_SHEET_ID')
-            if not sheet_id:
-                return 'Google Sheet ID not set in environment variables'
-            
-            # sheet_id = "106aQX0mnIjGHeRt3tVA4-0DeRbeXsZa6i47Dg3Nzvc8"
+            sheet_id = "1_k2DzIMttt7PvXg-V40_soNH6dA2-E8dG06T2uIhFgA"
 
             # Open the Google Sheet
             workbook = client.open_by_key(sheet_id)
 
-            # Data to be added or updated
-            new_values = data
+            # Process data based on its structure
+            if isinstance(data, list):
+                new_values = self._process_list_of_dicts(data)
+            elif isinstance(data, dict) and 'data' in data:
+                new_values = [data['data']]
+            else:
+                return "Invalid data format."
 
             # Get the current date for the worksheet name
             worksheet_name = datetime.now().strftime("%Y-%m-%d")
@@ -58,7 +55,7 @@ class GoogleSheetTool(BaseTool):
             # Update the header row
             headers = ["Opportunity number", "Opportunity name", "Opportunity description", "Location", "Budget", "Deadline", "Supplier match", "Supplier’s matching product", "Local partner requirements", "Requirement details", "Related documents path"]
             sheet.update('A1:K1', [headers])
-
+            
             # Create a dictionary of existing items based on the 'Opportunity number' column
             existing_items = {row[0]: row for row in existing_data[1:]}
             
@@ -91,3 +88,34 @@ class GoogleSheetTool(BaseTool):
         
         except Exception as e:
             return f"An error occurred: {e}"
+
+    def _process_list_of_dicts(self, data: List[Dict[str, str]]) -> List[Dict[str, str]]:
+        """
+        Process a list of dictionaries, each dictionary containing a single key-value pair or all fields.
+        """
+        processed_data = []
+        if all(len(d) == 1 for d in data):
+            # Convert list of single key-value pairs to a single dictionary
+            combined_data = {}
+            for d in data:
+                combined_data.update(d)
+            processed_data.append(combined_data)
+        else:
+            # Assume data is already in the correct format
+            processed_data = data
+        return processed_data
+
+# Example usage of the tool with corrected data structure
+# data = {
+#         "data": {
+#             "Opportunity number": "PDS-004-FY2024",
+#             "Opportunity name": "U.S. Embassy Ethiopia PD Request for Statement of Interest",
+#             "Opportunity description": "This funding opportunity is intended for organizations or individuals to submit a statement of interest to carry out a public engagement program. The program focuses on strengthening cultural ties between the United States and Ethiopia through various programs that promote bilateral cooperation and shared values.",
+#             "Location": "Ethiopia",
+#             "Budget": "Total amount available is approximately $200,000, pending funding availability. Awards may range from a minimum of $25,000 to a maximum of $100,000. Exceptional proposals above $200,000 may be considered depending on funding availability.",
+#             "Deadline": "April 30, 2024 (for the second round of applications)"
+#         }
+#     }
+
+# tool = GoogleSheetTool()
+# print(tool._run(data))

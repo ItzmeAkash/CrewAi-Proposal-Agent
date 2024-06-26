@@ -1,15 +1,14 @@
 import os
 import requests
+import re
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-import re
 from crewai_tools import BaseTool
 from dotenv import load_dotenv
 
-
-#load enviroment variables from .env file
+# Load environment variables from .env file
 load_dotenv()
 
 # Define the scopes required for accessing Google Drive API
@@ -55,37 +54,32 @@ class GoogleDriveDownloaderTool(BaseTool):
 
     def _run(self, folder_link: str) -> str:
         creds = None
-        if os.path.exists('token.json'):
-            creds = Credentials.from_authorized_user_file('token.json')
+        # Define the base path to the credentials file
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        CREDENTIALS_PATH = os.path.join(BASE_DIR, 'credentials.json')
+        TOKEN_PATH = os.path.join(BASE_DIR, 'token.json')
+
+        print(f"Credentials Path: {CREDENTIALS_PATH}")
+        print(f"Token Path: {TOKEN_PATH}")
+
+        if os.path.exists(TOKEN_PATH):
+            creds = Credentials.from_authorized_user_file(TOKEN_PATH)
 
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                client_secrets = {
-                    "installed": {
-                        "client_id": os.getenv('GOOGLE_CLIENT_ID'),
-                        "project_id": os.getenv('GOOGLE_PROJECT_ID'),
-                        "auth_uri": os.getenv('GOOGLE_AUTH_URI'),
-                        "token_uri": os.getenv('GOOGLE_TOKEN_URI'),
-                        "auth_provider_x509_cert_url": os.getenv('GOOGLE_AUTH_PROVIDER_X509_CERT_URL'),
-                        "client_secret": os.getenv('GOOGLE_CLIENT_SECRET'),
-                        "redirect_uris": [os.getenv('GOOGLE_REDIRECT_URI')],
-                        "refresh_token": os.getenv('GOOGLE_REFRESH_TOKEN')
-                    }
-                }
-                flow = InstalledAppFlow.from_client_config(client_secrets,SCOPES)
+                flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
                 creds = flow.run_local_server(port=0)
-            with open('token.json', 'w') as token:
+            with open(TOKEN_PATH, 'w') as token:
                 token.write(creds.to_json())
 
         service = build('drive', 'v3', credentials=creds)
         folder_id = extract_folder_id(folder_link)
         folder_name = extract_folder_name(service, folder_id)
 
-        # Define the new path in the previous directory (one level up from current directory)
-        # parent_directory = os.path.abspath(os.path.join(os.getcwd(), '..', '..'))
-        parent_directory = os.path.abspath(os.path.join(os.getcwd(),))
+        # Define the new path outside the current directory
+        parent_directory = os.path.abspath(os.path.join(BASE_DIR, '../../'))
         base_destination_folder = os.path.join(parent_directory, 'downloaded')
         if not os.path.exists(base_destination_folder):
             os.makedirs(base_destination_folder)
@@ -97,7 +91,6 @@ class GoogleDriveDownloaderTool(BaseTool):
             q=f"'{folder_id}' in parents",
             fields="files(id, name)"
         ).execute()
-
         for file in results.get('files', []):
             file_id = file.get('id')
             file_name = file.get('name')
@@ -106,7 +99,3 @@ class GoogleDriveDownloaderTool(BaseTool):
         
         return f"Files downloaded to {destination_folder}"
 
-# Example usage within the CrewAI framework
-# tool = GoogleDriveDownloaderTool()
-# result = tool.run('https://drive.google.com/drive/folders/1Nv2u6tJKxiMMONVN16YbZtwYmokn1NnP?usp=sharing')
-# print(result)

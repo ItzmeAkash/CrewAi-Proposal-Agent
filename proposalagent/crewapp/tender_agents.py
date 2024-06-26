@@ -2,9 +2,9 @@ import os
 from crewai import Agent
 from langchain_openai import ChatOpenAI
 from crewai_tools import PDFSearchTool,FileReadTool
-from tools.GoogleDrive.google_drive_tools import GoogleDriveDownloaderTool
-from tools.GoogleSheetTool import GoogleSheetTool
-from tools.GoogleSheetExtractorTool import GoogleSheetExtractorTool
+from crewapp.tools.GoogleDrive.google_drive_tools import GoogleDriveDownloaderTool
+from crewapp.tools.GoogleSheetTool import GoogleSheetTool
+from crewapp.tools.GoogleSheetExtractorTool import GoogleSheetExtractorTool
 from dotenv import load_dotenv
 
 
@@ -19,6 +19,7 @@ class TenderPrePreparationAgents:
         self.google_sheet_tool = GoogleSheetTool()
         self.pdf_search_tool = PDFSearchTool()
         self.google_sheet_extractor_tool = GoogleSheetExtractorTool()
+        # self.combinetextfile_tool = CombineTextFilesFromCurrentDirectoryTool()
         self.file_reader_tool = FileReadTool()
         
         
@@ -143,7 +144,7 @@ class TenderPrePreparationAgents:
             llm=self.OpenAIGpt35,
             allow_delegation=True,
         )
-
+    
     def google_search_supplier_finder_agent(self):
         return Agent(
             role="Google Search supplier Engine",

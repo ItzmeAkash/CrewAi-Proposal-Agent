@@ -1,9 +1,10 @@
 from crewai import Task
 from crewai_tools import PDFSearchTool, FileReadTool
-from tools.GoogleDrive.google_drive_tools import GoogleDriveDownloaderTool
-from tools.GoogleSheetTool import GoogleSheetTool
-from tools.GoogleSheetExtractorTool import GoogleSheetExtractorTool
-from util import RepeatedHumanInputTask
+from crewapp.tools.GoogleDrive.google_drive_tools import GoogleDriveDownloaderTool
+from crewapp.tools.GoogleSheetTool import GoogleSheetTool
+from crewapp.tools.GoogleSheetExtractorTool import GoogleSheetExtractorTool
+from crewapp.util import RepeatedHumanInputTask
+import os
 
 class TenderTask:
     def __init__(self):
@@ -24,24 +25,26 @@ class TenderTask:
 
     # PDF Specific Data Extraction Task
     def pdf_extraction_task(self, agent, pdf_path):
+        
+        json_filename = 'extracted_data.json'
+        output_file_path = os.path.join('crewapp', json_filename)
+
         return Task(
             description=(
                 f"Extract the following data from the PDF document located at {pdf_path}: "
                 "Opportunity number, Opportunity name, Opportunity description, Location, Budget, and Deadline."
             ),
             expected_output=(
-                "A dictionary containing the extracted data fields: "
-                "'Opportunity number', 'Opportunity name', 'Opportunity description',"
-                "'Location', 'Budget', 'Deadline'"
+                """A dictionary containing the extracted data fields: "Opportunity number", "Opportunity name", "Opportunity description","Location","Budget", "Deadline"""
             ),
             tools=[self.pdf_search_tool],
             agent=agent,
-            output_file="extracted_data.json"
+            output_file=output_file_path,
         )
 
     # Google Sheet Storing Task
     def google_sheet_organiser_task(self, agent):
-        return RepeatedHumanInputTask(
+        return Task(
             description="Add the extracted data to the Google Sheet using GoogleSheetTool to add the extracted data into the Google Sheet.",
             expected_output='A confirmation message stating that the Google Sheet has been updated successfully.',
             tools=[self.google_sheet_tools],
@@ -51,20 +54,30 @@ class TenderTask:
         )
 
     # Google Sheet Extracted Task
-    def extract_sheet_task(self, agent):
+    def extract_sheet_task(self, agent,opportunity_number):
+        
+        output_file_path = os.path.join('crewapp', "excel.txt")
         return Task(
-            description="Extract the selected data from the Google Sheet.",
+            description=f"Extract only the detail with this {opportunity_number} from the selected data in the Google Sheet",
             expected_output=(
                 "The details should include Opportunity number ,Supplier match, Supplier’s matching product,Local partner requirements,Requirement details and other relevant information present in the Google Sheet"
+                """for example in .txt file i want all the details in this format
+                    Opportunity number: 
+                    Supplier match: 
+                    Supplier’s matching product: 
+                    Local partner requirements: 
+                    Requirement details: """
             ),
             agent=agent,
             tools=[self.google_sheet_extractor_tool],
-            output_file='excel.txt',
+            output_file=output_file_path,
             async_execution=False,
         )
          
     # Proposal Template Task
     def proposal_template_task(self, agent, pdf_file):
+        
+        output_file_path = os.path.join('crewapp', "proposal_template.txt")
         return Task(
             description=(
                 f"Create a comprehensive proposal template based on the tender {pdf_file} attached. "
@@ -81,12 +94,14 @@ class TenderTask:
                 "and professional language throughout."
             ),
             agent=agent,
-            output_file='proposal_template.txt',
+            output_file=output_file_path,
             tools=[self.pdf_search_tool],
         )
         
     # Proposal Writer Task
     def proposal_writer_task(self, agent):
+        
+        output_file_path = os.path.join('crewapp', "proposal.txt")
         return Task(
             description=(
                 "Using the provided proposal template and context, create a comprehensive and compelling proposal for the supplier. "
@@ -103,10 +118,12 @@ class TenderTask:
                 "Conclusion reinforcing why the supplier is the superior choice and how their goals align with the tender."
             ),
             agent=agent,
-            output_file='final_proposal.txt',
+            output_file=output_file_path,
         )
     
     def google_search_task(self,agent,prompt):
+        
+        output_file_path = os.path.join('crewapp', "googlesearch.txt")
         return Task(
             description=(
                 f"Based on give {prompt} you have to go to google search and give us the latest information"
@@ -115,11 +132,13 @@ class TenderTask:
                 "Top 15 company names that match the provided details and we are expecting the company details, like website small description about company,there product and there link,website contact details, make sure only search based on provided details"
             ),
             agent=agent,
-            output_file='googlesearch.txt',
+            output_file=output_file_path,
         )
 
 
     def google_search_supplier_finder_task(self,agent,prompt):
+        
+        output_file_path = os.path.join('crewapp', "googlesearchsupplier.txt")
         return Task(
             description=(
                 f"Based on give {prompt} you have to go to google search and give us the latest information"
@@ -128,7 +147,7 @@ class TenderTask:
                 "Top 15 company names who has a product that matches the provided details and can partner with us in the bidding process. We are expecting the company details, like website small description about company, their product and their link, website contact details, make sure only search based on provided details" 
             ),
             agent=agent,
-            output_file='googlesearchsupplierFinder.txt',
+            output_file=output_file_path,
         )
     
-        c
+        

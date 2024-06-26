@@ -1,12 +1,15 @@
 import os
 from dotenv import load_dotenv
 from crewai import Crew, Process
-from tender_agents import TenderPrePreparationAgents
-from tender_tasks import TenderTask
+from crewapp.tender_agents import TenderPrePreparationAgents
+from crewapp.tender_tasks import TenderTask
 from textwrap import dedent
 import pandas as pd
-
+import json
+import re
+import logging
 load_dotenv()
+
 
 class TenderCrew:
     def __init__(self, folder_link):
@@ -22,9 +25,51 @@ class TenderCrew:
                     return os.path.join(root, file)
         return None
 
-    def run(self):
+    def extract_json_content(self, text):
+        """
+        Extract JSON content from text.
+        """
+        # Use regular expressions to find JSON content
+        match = re.search(r'(\{.*\})', text, re.DOTALL)
+        if match:
+            return match.group(1)
+        else:
+            print("No JSON content found.")
+            return None
+
+    def load_json(self, file_path):
+        """
+        Load JSON data from a file, extracting valid JSON if necessary.
+        """
+        if not os.path.exists(file_path):
+            print(f"File not found: {file_path}")
+            return None
+
+        if os.stat(file_path).st_size == 0:
+            print(f"File is empty: {file_path}")
+            return None
+
+        try:
+            with open(file_path, 'r') as file:
+                content = file.read()
+                json_content = self.extract_json_content(content)
+                if json_content:
+                    data = json.loads(json_content)
+                    return data
+                else:
+                    print("Failed to extract JSON content.")
+                    return None
+        except json.JSONDecodeError as e:
+            print(f"Error loading JSON file: {e}")
+            return None
+
+    def run_initial(self):
+
         agents = TenderPrePreparationAgents()
         tasks = TenderTask()
+
+        def update_progress(message):
+            print(message)
 
         # Google Drive Agent and Task
         google_drive_agent = agents.google_drive_agent(self.folder_link)
@@ -40,9 +85,14 @@ class TenderCrew:
         initial_crew.kickoff()
 
         # Automatically detect the PDF path
-        download_directory = 'downloaded' 
+        # Get the current script directory
+        current_directory = os.path.dirname(__file__)
+
+        # Specify the download directory relative to the current script directory
+        download_directory = os.path.join(current_directory, 'downloaded')
+
         pdf_path = self.find_pdf_path(download_directory)
-        print(pdf_path)
+        update_progress("Finding PDF Path...")
 
         if not pdf_path:
             raise FileNotFoundError("No PDF file found in the specified directory.")
@@ -54,42 +104,75 @@ class TenderCrew:
         # Google Sheet Agent and Task
         google_sheet_organiser_agent = agents.google_sheet_organiser_agent()
         google_sheet_organiser_task = tasks.google_sheet_organiser_task(google_sheet_organiser_agent)
+        
+        pdf_and_google_sheet_crew = Crew(
+            agents=[pdf_extraction_agent, google_sheet_organiser_agent],
+            tasks=[pdf_extraction_task, google_sheet_organiser_task],
+            verbose=True,
+            process=Process.sequential,
+        )
+        pdf_and_google_sheet_crew.kickoff()
 
-        # Google Sheet Extraction Agent and Task
-        data_extract_specialist_agent = agents.data_extract_specialist()
-        data_extract_specialist_agent_task = tasks.extract_sheet_task(data_extract_specialist_agent)
+        return pdf_path
+
+    def run_final(self):
+
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+        logging.debug("Starting run_final method")
+        current_directory = os.path.dirname(__file__)
+
+        # Specify the download directory relative to the current script directory
+        download_directory = os.path.join(current_directory, 'downloaded')
+
+        pdf_path = self.find_pdf_path(download_directory)
+        
+        agents = TenderPrePreparationAgents()
+        tasks = TenderTask()
 
         # Proposal Template Agent and Task
         proposal_template_agent = agents.proposal_template_agent()
         proposal_template_task = tasks.proposal_template_task(proposal_template_agent, pdf_path)
 
-        # Proposal Writer Agent and Task
-        proposal_writer_agent = agents.proposal_writer_agent()
-        proposal_writer_task = tasks.proposal_writer_task(proposal_writer_agent)
-        proposal_writer_task.context = [data_extract_specialist_agent_task, proposal_template_task]
+        # Extract opportunity number from JSON
+        json_filename = 'extracted_data.json'
+        json_path = os.path.join('crewapp', json_filename)
+        json_data = self.load_json(json_path)
 
-        # Run the initial crew
-        google_sheet_crew = Crew(
+        if json_data:
+            opportunity_number = json_data.get('Opportunity number', None)
+            logging.debug(f"Extracted Opportunity number: {opportunity_number}")
+            print(opportunity_number)
+        else:
+            logging.error("Failed to load JSON data.")
+            print("Failed to load JSON data.")
+
+        # Google Sheet Extraction Agent and Task
+        data_extract_specialist_agent = agents.data_extract_specialist()
+        data_extract_specialist_agent_task = tasks.extract_sheet_task(data_extract_specialist_agent, opportunity_number)
+
+        data_extraction_crew = Crew(
             agents=[
-                pdf_extraction_agent,
-                google_sheet_organiser_agent,
-                proposal_template_agent,
                 data_extract_specialist_agent,
             ],
             tasks=[
-                pdf_extraction_task,
-                google_sheet_organiser_task,
-                proposal_template_task,
                 data_extract_specialist_agent_task
             ],
             verbose=True,
             process=Process.sequential,
         )
         
-        google_sheet_crew.kickoff()
+        data_extraction_crew.kickoff()
                 
+        # Proposal Writer Agent and Task
+        proposal_writer_agent = agents.proposal_writer_agent()
+        proposal_writer_task = tasks.proposal_writer_task(proposal_writer_agent)
+        proposal_writer_task.context = [data_extract_specialist_agent_task, proposal_template_task]
+
+        # file_path = os.path.join('proposalagent','crewapp', 'excel.txt')
+
         # Define the file path
-        file_path = 'excel.txt'
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(BASE_DIR, 'excel.txt')
 
         # Read the file
         with open(file_path, 'r') as file:
@@ -130,15 +213,20 @@ class TenderCrew:
         result = ""
 
         # Check the "Supplier match" condition
-        
-        if exceldf['suppliermatch'].iloc[0].lower() in ['n', 'no']:
+        logging.debug(f"Supplier match: {exceldf['suppliermatch']}, Local partner requirements: {exceldf['localpartnerrequirements']}")
+        if exceldf['suppliermatch'].iloc[0].lower() in ['n', 'no'] and exceldf['localpartnerrequirements'].iloc[0].lower() in ['n', 'no']:
             # prompt = exceldf['Supplierâ€™s Matching Product'][0]
-            prompt = exceldf['supplierâsmatchingproduct'][0]
-            
+            prompt = exceldf['suppliersmatchingproduct'][0]
+
             
             google_search_supplier_finder_agent = agents.google_search_supplier_finder_agent()
             google_search_supplier_finder_task = tasks.google_search_supplier_finder_task(google_search_supplier_finder_agent, prompt)
-
+            
+            
+            local_search = exceldf['requirementdetails'][0]
+            google_search_agent = agents.google_search_agent()
+            google_search_task = tasks.google_search_task(google_search_agent, local_search)
+            
             # Run the Google Search Crew for Supplier Finder
             supplier_finder_crew = Crew(
                 agents=[google_search_supplier_finder_agent],
@@ -148,17 +236,12 @@ class TenderCrew:
             )
 
             supplier_result = supplier_finder_crew.kickoff()
+            logging.debug(f"Supplier finder result: {supplier_result}")
             result += "\n\n########################"
             result += "\n## Google Search Supplier Finder Results"
             result += "\n########################\n"
             result += supplier_result
             
-        # Check the "Local partner requirements" 
-        if exceldf['localpartnerrequirements'].iloc[0].lower() in ['n', 'no']:
-            prompt = exceldf['requirementdetails'][0]
-            google_search_agent = agents.google_search_agent()
-            google_search_task = tasks.google_search_task(google_search_agent, prompt)
-
             # Run the Google Search Crew for Local Partner Requirements
             search_crew = Crew(
                 agents=[google_search_agent],
@@ -168,61 +251,76 @@ class TenderCrew:
             )
 
             search_result = search_crew.kickoff()
+            logging.debug(f"Google search result: {search_result}")
             result += "\n\n########################"
             result += "\n## Google Search Results"
             result += "\n########################\n"
             result += search_result
-        else:
+            
+        elif exceldf['suppliermatch'].iloc[0].lower() not in ['n', 'no'] and  exceldf['localpartnerrequirements'].iloc[0].lower() in ['n', 'no']:
+            local_search = exceldf['requirementdetails'][0]
+            
             proposal_writer_task = tasks.proposal_writer_task(proposal_writer_agent)
             proposal_writer_task.context = [data_extract_specialist_agent_task, proposal_template_task]
-
+            
+            google_search_agent = agents.google_search_agent()
+            google_search_task = tasks.google_search_task(google_search_agent, local_search)
             # Run the Proposal Writing Crew
             proposal_crew = Crew(
-                agents=[proposal_writer_agent],
-                tasks=[proposal_writer_task],
+                agents=[proposal_template_agent,proposal_writer_agent],
+                tasks=[proposal_template_task,proposal_writer_task],
                 verbose=True,
                 process=Process.sequential
             )
 
             proposal_result = proposal_crew.kickoff()
+            logging.debug(f"Proposal writing result: {proposal_result}")
+            result += "\n\n########################"
+            result += "\n## Proposal Writing Results"
+            result += "\n########################\n"
+            result += proposal_result
+            
+            
+            # Run the Google Search Crew for Local Partner Requirements
+            search_crew = Crew(
+                agents=[google_search_agent],
+                tasks=[google_search_task],
+                verbose=True,
+                process=Process.sequential
+            )
+
+            search_result = search_crew.kickoff()
+            logging.debug(f"Google search result: {search_result}")
+            result += "\n\n########################"
+            result += "\n## Google Search Results"
+            result += "\n########################\n"
+            result += search_result
+            
+            
+            
+        elif exceldf['suppliermatch'].iloc[0].lower() not in ['n', 'no'] and exceldf['localpartnerrequirements'].iloc[0].lower() not in ['n', 'no']:
+
+             # Run the Google Search Crew for Supplier Finder
+
+            proposal_writer_task = tasks.proposal_writer_task(proposal_writer_agent)
+            proposal_writer_task.context = [data_extract_specialist_agent_task, proposal_template_task]
+
+            # Run the Proposal Writing Crew
+            proposal_crew = Crew(
+                agents=[proposal_template_agent,proposal_writer_agent],
+                tasks=[proposal_template_task,proposal_writer_task],
+                verbose=True,
+                process=Process.sequential
+            )
+
+            proposal_result = proposal_crew.kickoff()
+            logging.debug(f"Proposal writing result: {proposal_result}")
             result += "\n\n########################"
             result += "\n## Proposal Writing Results"
             result += "\n########################\n"
             result += proposal_result
 
-        # # Run the remaining crew
-        # remaining_crew = Crew(
-        #     agents=[
-        #         pdf_extraction_agent,
-        #         google_sheet_organiser_agent,
-        #         proposal_template_agent,
-        #         data_extract_specialist_agent,
-        #     ],
-        #     tasks=[
-        #         pdf_extraction_task,
-        #         google_sheet_organiser_task,
-        #         proposal_template_task,
-        #         data_extract_specialist_agent_task,
-        #     ],
-        #     verbose=True,
-        #     process=Process.sequential,
-        # )
 
-        # result += remaining_crew.kickoff()
-
-        return result
-
-if __name__ == "__main__":
-    print("## Welcome to Proposal Writing Crew")
-    print('-------------------------------')
-    folder_link = input(
-        dedent("""
-            Please Enter your google drive link here:
-        """)
-    )
-    tender_crew = TenderCrew(folder_link)
-    result = tender_crew.run()
-    print("\n\n########################")
-    print("## Here is the Final Result ")
-    print("########################\n")
-    print(result)
+       
+        logging.debug(f"Final result: {result}")
+        return result   
