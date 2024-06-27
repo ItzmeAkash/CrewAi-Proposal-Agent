@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from crewai import Crew, Process
 from crewapp.tender_agents import TenderPrePreparationAgents
 from crewapp.tender_tasks import TenderTask
-from textwrap import dedent
+from docx import Document
 import pandas as pd
 import json
 import re
@@ -62,6 +62,23 @@ class TenderCrew:
         except json.JSONDecodeError as e:
             print(f"Error loading JSON file: {e}")
             return None
+        
+    #Saving the result as Docx  
+    def save_result_as_docx(self,result_text,file_name):
+        output_folder = os.path.join(os.path.dirname(__file__), 'output')
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        output_filename = os.path.join(output_folder, file_name)
+        # Create a Document object
+        doc = Document()
+        
+        # Add a paragraph with the text
+        doc.add_paragraph(result_text)
+        
+        # Save the document
+        doc.save(output_filename)
+        print(f"Docx saved to {output_filename}")
    
     global cur
     cur = "Agents are currently Inactive..."
@@ -240,6 +257,7 @@ class TenderCrew:
             )
 
             supplier_result = supplier_finder_crew.kickoff()
+            self.save_result_as_docx(supplier_result,'googlesupplier.docx')
             logging.debug(f"Supplier finder result: {supplier_result}")
             result += "\n\n########################"
             result += "\n## Google Search Supplier Finder Results"
@@ -255,6 +273,8 @@ class TenderCrew:
             )
             cur="Internet Search Assistant : Actively scanning for local patterns"
             search_result = search_crew.kickoff()
+            self.save_result_as_docx(search_result,'googlelocalpartner.docx')
+
             logging.debug(f"Google search result: {search_result}")
             result += "\n\n########################"
             result += "\n## Google Search Results"
@@ -276,8 +296,10 @@ class TenderCrew:
                 verbose=True,
                 process=Process.sequential
             )
-
+            cur= "Proposal Writer: Agent is crafting a compelling proposal."
             proposal_result = proposal_crew.kickoff()
+            self.save_result_as_docx(proposal_result,'proposal.docx')
+
             logging.debug(f"Proposal writing result: {proposal_result}")
             result += "\n\n########################"
             result += "\n## Proposal Writing Results"
@@ -292,8 +314,9 @@ class TenderCrew:
                 verbose=True,
                 process=Process.sequential
             )
-            cur= "Proposal Writer: Agent is crafting a compelling proposal."
+            cur="Internet Search Assistant : Actively scanning for local patterns"
             search_result = search_crew.kickoff()
+            self.save_result_as_docx(search_result,'googlelocalpartner.docx')
             logging.debug(f"Google search result: {search_result}")
             result += "\n\n########################"
             result += "\n## Google Search Results"
@@ -318,6 +341,7 @@ class TenderCrew:
             )
             cur= "Proposal Writer: Agent is crafting a compelling proposal."
             proposal_result = proposal_crew.kickoff()
+            self.save_result_as_docx(proposal_result,'proposal.docx')
             logging.debug(f"Proposal writing result: {proposal_result}")
             result += "\n\n########################"
             result += "\n## Proposal Writing Results"

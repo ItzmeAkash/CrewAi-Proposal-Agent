@@ -45,6 +45,19 @@
             background-color: #1e83f0;
             color: white;
         }
+        .download-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: #fff;
+            background-color: #28a745;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .download-btn:hover {
+            background-color: #218838;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -52,6 +65,7 @@
         <h1>Here is the Final Result</h1>
         <pre>{{ result }}</pre>
         <a href="/">Back</a>
+        <a href="{% url 'download_files' %}" class="download-btn">Download All Files</a>
     </div>
 </body>
 </html>
