@@ -1,41 +1,16 @@
-**Proposal Document**
-
-**Title:** Enhancing Literacy Education in Ethiopia through Boost Reading Program
-
-**Opportunity Number:** PDS-004-FY2024
-
-**Supplier:** Amlify
-
-**Product:** Boost Reading
+**Executive Summary:**
+Amplify is pleased to present a compelling proposal in response to the U.S. Embassy Ethiopia PD Request for Statement of Interest opportunity. Our product, "boost reading," is uniquely positioned to support Ethiopia's economic and political reforms by enhancing literacy rates and empowering citizens with better education and information access. This proposal outlines how Amplify's innovative reading enhancement tool aligns with the thematic area of promoting civil society, democracy, and governance in Ethiopia.
 
 **Introduction:**
-Amlify is pleased to submit this proposal in response to the U.S. Embassy Ethiopia Public Diplomacy funding opportunity. Our proposal aims to enhance literacy education in Ethiopia through the implementation of the Boost Reading program, a student-led supplemental reading curriculum that has shown significant improvements in literacy outcomes for students in grades K–5.
+Amplify is a leading provider of educational technology solutions, with a focus on improving literacy and educational outcomes. Our product, "boost reading," is designed to enhance reading skills and comprehension levels among students of all ages. By leveraging interactive and engaging content, "boost reading" has been proven to increase reading proficiency and foster a love for learning.
 
-**Background:**
-Boost Reading is a digital assistant in literacy instruction that extends core instruction, addresses remediation needs, and adapts activities for individual skill development. It has been proven to increase the number of students on track for reading success, particularly benefiting students identified as 'at-risk'. The program employs highly adaptive technology to create individual skill maps for each student, catering to their specific needs and skill levels.
+**Thematic Alignment:**
+Amplify's "boost reading" product directly supports Ethiopia's economic and political reforms by promoting literacy and education as key drivers of societal progress. In line with the U.S. Embassy's priority areas, our product aims to empower individuals with the knowledge and skills needed to actively participate in civil society, contribute to democratic processes, and engage in informed governance.
 
-**Program Description:**
-Our proposed program will involve the implementation of Boost Reading in partnership with a registered non-profit organization in Ethiopia that has been working in education for more than 10 years. The program will focus on providing additional support and reinforcement across all instructional tiers, with a particular emphasis on students reading below, at, or above grade level. By leveraging Boost Reading's unique features and value propositions, educators can provide students with engaging and effective literacy instruction tailored to their individual needs.
-
-**Objectives:**
-1. Improve literacy outcomes for students in grades K–5 in Ethiopia.
-2. Provide additional support and reinforcement across all instructional tiers.
-3. Address remediation needs and adapt activities for individual skill development.
-4. Increase the number of students on track for reading success, particularly those identified as 'at-risk'.
-5. Enhance teachers' ability to provide personalized literacy instruction.
-
-**Implementation Plan:**
-1. Partner with a registered non-profit organization in Ethiopia to implement the Boost Reading program.
-2. Provide training and support to teachers on how to effectively integrate Boost Reading into their literacy instruction.
-3. Monitor and evaluate student progress using built-in benchmark assessments and monthly Curioso Skill Scans.
-4. Collect feedback from teachers and students to continuously improve the program and ensure its effectiveness.
-
-**Budget:**
-Total Project Cost: $150,000
-- Program Implementation: $100,000
-- Teacher Training and Support: $20,000
-- Monitoring and Evaluation: $20,000
-- Program Improvement: $10,000
+**Impact Assessment:**
+Through the implementation of "boost reading" in educational settings across Ethiopia, Amplify aims to measure the impact of improved literacy rates on broader socio-economic indicators. By tracking student performance, engagement levels, and reading outcomes, we will demonstrate the tangible benefits of our product in supporting the country's development goals.
 
 **Conclusion:**
-Amlify is committed to improving literacy outcomes for students in Ethiopia through the Boost Reading program. We believe that our innovative approach to literacy instruction, combined with the expertise of our local partner, will make a significant impact on student learning outcomes. We look forward to the opportunity to collaborate with the U.S. Embassy Ethiopia Public Diplomacy Section to advance public diplomacy efforts in Ethiopia through enhanced literacy education.
+In conclusion, Amplify is confident that our "boost reading" product is the ideal solution to support Ethiopia's economic and political reforms. By investing in literacy and education, the U.S. Embassy can contribute to building a more informed, empowered, and prosperous society. We look forward to the opportunity to collaborate and make a meaningful impact in Ethiopia's educational landscape.
+
+Thank you for considering Amplify as your partner in advancing literacy and education in Ethiopia.

@@ -25,12 +25,25 @@
         label {
             margin-top: 10px;
         }
+        
     </style>
+    <script>
+        function fetchAgentStatus() {
+            fetch("{% url 'agent_status' %}")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('current-agent').innerText = data.agent;
+                });
+        }
+
+        setInterval(fetchAgentStatus, 2000); 
+    </script>
 </head>
 <body>
     <div class="container">
         <h1>Welcome to Proposal Writing Crew</h1>
-        <h2>Current Agent Working</h2>
+        <h4>Current Working Agent</h4>
+        <p id="current-agent">Loading.....</p>
         <form method="post">
             {% csrf_token %}
             <div class="form-group">
@@ -39,6 +52,7 @@
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
+     
     </div>
 </body>
 </html>

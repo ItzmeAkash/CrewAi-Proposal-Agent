@@ -26,10 +26,23 @@
             margin-top: 10px;
         }
     </style>
+     <script>
+        function fetchAgentStatus() {
+            fetch("{% url 'agent_status' %}")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('current-agent').innerText = data.agent;
+                });
+        }
+
+        setInterval(fetchAgentStatus, 2000); 
+    </script>
 </head>
 <body>
     <div class="container">
         <h1>Review and Update Data</h1>
+        <h4>Current Working Agent</h4>
+        <p id="current-agent">Human Intervention</p>
         <iframe width="100%" height="500" src="https://docs.google.com/spreadsheets/d/1_k2DzIMttt7PvXg-V40_soNH6dA2-E8dG06T2uIhFgA/edit?gid=1002171032#gid=1002171032"></iframe>
 
         <form method="post">

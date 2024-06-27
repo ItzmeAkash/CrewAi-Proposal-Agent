@@ -13,7 +13,7 @@ from typing import List,Dict
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CREDENTIALS_PATH = os.path.join(BASE_DIR, 'googlesheetcredentials.json')
-
+print(CREDENTIALS_PATH)
 class GoogleSheetExtractorTool(BaseTool):
     name: str = "GoogleSheetExtractor"
     description: str = "Extract specific details from a Google Sheet based on the current date's worksheet."

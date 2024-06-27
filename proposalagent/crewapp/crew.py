@@ -62,12 +62,19 @@ class TenderCrew:
         except json.JSONDecodeError as e:
             print(f"Error loading JSON file: {e}")
             return None
+   
+    global cur
+    cur = "Agents are currently Inactive..."
 
+    def get_current_agent():
+        global cur
+        return cur
+    
     def run_initial(self):
 
         agents = TenderPrePreparationAgents()
         tasks = TenderTask()
-
+        global cur
         def update_progress(message):
             print(message)
 
@@ -82,6 +89,7 @@ class TenderCrew:
             verbose=True,
             process=Process.sequential,
         )
+        cur = "Downloader: The agent is currently downloading the PDF from Drive."
         initial_crew.kickoff()
 
         # Automatically detect the PDF path
@@ -111,6 +119,7 @@ class TenderCrew:
             verbose=True,
             process=Process.sequential,
         )
+        cur= "Extractor: Agent is currently retrieving data from the PDF."
         pdf_and_google_sheet_crew.kickoff()
 
         return pdf_path
@@ -119,19 +128,14 @@ class TenderCrew:
 
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
         logging.debug("Starting run_final method")
-        current_directory = os.path.dirname(__file__)
 
-        # Specify the download directory relative to the current script directory
-        download_directory = os.path.join(current_directory, 'downloaded')
-
-        pdf_path = self.find_pdf_path(download_directory)
-        
         agents = TenderPrePreparationAgents()
         tasks = TenderTask()
-
+        global cur
+        cur= "Human Intervention"
         # Proposal Template Agent and Task
         proposal_template_agent = agents.proposal_template_agent()
-        proposal_template_task = tasks.proposal_template_task(proposal_template_agent, pdf_path)
+        proposal_template_task = tasks.proposal_template_task(proposal_template_agent, self.pdf_path)
 
         # Extract opportunity number from JSON
         json_filename = 'extracted_data.json'
@@ -160,7 +164,7 @@ class TenderCrew:
             verbose=True,
             process=Process.sequential,
         )
-        
+        cur = "Google Sheet Extractor: Currently processing data retrieval from Google Sheets."
         data_extraction_crew.kickoff()
                 
         # Proposal Writer Agent and Task
@@ -249,7 +253,7 @@ class TenderCrew:
                 verbose=True,
                 process=Process.sequential
             )
-
+            cur="Internet Search Assistant : Actively scanning for local patterns"
             search_result = search_crew.kickoff()
             logging.debug(f"Google search result: {search_result}")
             result += "\n\n########################"
@@ -288,7 +292,7 @@ class TenderCrew:
                 verbose=True,
                 process=Process.sequential
             )
-
+            cur= "Proposal Writer: Agent is crafting a compelling proposal."
             search_result = search_crew.kickoff()
             logging.debug(f"Google search result: {search_result}")
             result += "\n\n########################"
@@ -312,7 +316,7 @@ class TenderCrew:
                 verbose=True,
                 process=Process.sequential
             )
-
+            cur= "Proposal Writer: Agent is crafting a compelling proposal."
             proposal_result = proposal_crew.kickoff()
             logging.debug(f"Proposal writing result: {proposal_result}")
             result += "\n\n########################"

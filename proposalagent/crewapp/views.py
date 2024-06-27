@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from crewapp.crew import TenderCrew
+from django.http import JsonResponse
 
 def index(request):
     if request.method == "POST":
@@ -25,3 +26,8 @@ def human_input(request):
             
             pass
     return render(request, 'human_input.html')
+
+def agent_status_view(request):
+    if request.method == "GET":
+        current_agent = TenderCrew.get_current_agent()
+        return JsonResponse({'agent': current_agent})

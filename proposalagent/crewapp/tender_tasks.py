@@ -122,7 +122,6 @@ class TenderTask:
         )
     
     def google_search_task(self,agent,prompt):
-        
         output_file_path = os.path.join('crewapp', "googlesearch.txt")
         return Task(
             description=(
