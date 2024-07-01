@@ -25,8 +25,6 @@
         label {
             margin-top: 10px;
         }
-
-        
     </style>
     <script>
         function fetchAgentStatus() {
@@ -45,6 +43,11 @@
         <h1>Welcome to Proposal Writing Crew</h1>
         <h4>Current Working Agent</h4>
         <p id="current-agent">Loading.....</p>
+        {% if error_message %}
+            <div class="alert alert-danger" role="alert">
+                {{ error_message }}
+            </div>
+        {% endif %}
         <form method="post">
             {% csrf_token %}
             <div class="form-group">
@@ -53,7 +56,6 @@
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
-     
     </div>
 </body>
 </html>
