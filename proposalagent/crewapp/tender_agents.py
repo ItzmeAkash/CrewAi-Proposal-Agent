@@ -36,7 +36,7 @@ class TenderPrePreparationAgents:
             memory=True,
             tools=[self.google_drive_tool],
             allow_delegation=True,
-            llm=self.OpenAIGpt4o
+            llm=self.OpenAIGpt35
         )
 
     # PDF Specific Data Extraction Agent
@@ -52,7 +52,7 @@ class TenderPrePreparationAgents:
             ),
             tools=[self.pdf_search_tool],
             allow_delegation=True,
-            llm=self.OpenAIGpt4o
+            llm=self.OpenAIGpt35
         )
         
     # Google Sheet Storing Agent
@@ -68,7 +68,7 @@ class TenderPrePreparationAgents:
             verbose=True,
             memory=True,
             allow_delegation=True,
-            llm=self.OpenAIGpt4o
+            llm=self.OpenAIGpt35
         )
 
     # Google Sheet Extracted Agent 
@@ -83,7 +83,7 @@ class TenderPrePreparationAgents:
             memory=True,
             verbose=True,
             tools=[self.google_sheet_extractor_tool],
-            llm=self.OpenAIGpt4o,
+            llm=self.OpenAIGpt35,
             allow_delegation=True,
             
         )
@@ -102,7 +102,7 @@ class TenderPrePreparationAgents:
                 "Include placeholders (___) for client-specific information with brief descriptions and highlight areas needing additional information with suggestions for improvement."
                 "Use clear, confident, and professional language throughout the document."
             ),
-            llm=self.OpenAIGpt4o,
+            llm=self.OpenAIGpt35,
             tools=[self.pdf_search_tool],
             verbose=True,
             memory=True,
@@ -126,7 +126,7 @@ class TenderPrePreparationAgents:
             ),
             verbose=True,
             memory=True,
-            llm=self.OpenAIGpt4o,
+            llm=self.OpenAIGpt35,
             allow_delegation=True,
         )
         
@@ -141,7 +141,7 @@ class TenderPrePreparationAgents:
             ),
             verbose=True,
             memory=True,
-            llm=self.OpenAIGpt4o,
+            llm=self.OpenAIGpt35,
             allow_delegation=True,
         )
     
@@ -156,7 +156,7 @@ class TenderPrePreparationAgents:
             ),
             verbose=True,
             memory=True,
-            llm=self.OpenAIGpt4o,
+            llm=self.OpenAIGpt35,
             allow_delegation=True,
         )
         

@@ -55,3 +55,9 @@ class GoogleSheetExtractorTool(BaseTool):
                 return "No worksheet available for the current date."
         except Exception as e:
             return f"An error occurred: {e}"
+        
+
+
+
+# tool = GoogleSheetExtractorTool()
+# print(tool._run())

@@ -11,10 +11,9 @@ CREDENTIALS_PATH = os.path.join(BASE_DIR, 'googlesheetcredentials.json')
 
 class GoogleSheetTool(BaseTool):
     name: str = "GoogleSheetTool"
-    description: str = "Tool to store data into a Google Sheet using gspread and Google service account credentials"
+    description: str = "Tool to store data into a Google Sheet using gspread and Google service account credentials. The input should be a list of dictionaries, each containing the data to be stored."
 
     def _run(self, data: Union[List[Dict[str, str]], Dict[str, List[Dict[str, str]]]]) -> str:
-    
         try:
             # Define the required scope
             scopes = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -106,16 +105,16 @@ class GoogleSheetTool(BaseTool):
         return processed_data
 
 # Example usage of the tool with corrected data structure
-# data = {
-#         "data": {
-#             "Opportunity number": "PDS-004-FY2024",
-#             "Opportunity name": "U.S. Embassy Ethiopia PD Request for Statement of Interest",
-#             "Opportunity description": "This funding opportunity is intended for organizations or individuals to submit a statement of interest to carry out a public engagement program. The program focuses on strengthening cultural ties between the United States and Ethiopia through various programs that promote bilateral cooperation and shared values.",
-#             "Location": "Ethiopia",
-#             "Budget": "Total amount available is approximately $200,000, pending funding availability. Awards may range from a minimum of $25,000 to a maximum of $100,000. Exceptional proposals above $200,000 may be considered depending on funding availability.",
-#             "Deadline": "April 30, 2024 (for the second round of applications)"
-#         }
+# data = [
+#     {
+#         "Opportunity number": "72044224RFA00004",
+#         "Opportunity name": "Bridging Education Solutions for Transformation (BEST) Activity",
+#         "Opportunity description": "Supplementing the intervention description as stated in the Results Framework above, USAID and the recipient may identify opportunities for improving our response through this mechanism to address specific education priority needs that cannot be precisely identified during the design process, but emerge throughout implementation. Applying the opportunity module may also allow this activity to expand geographic coverage to other provinces/districts as appropriate or expand reach within existing provinces. Subject to funding availability, USAID will work with the recipient to identify priority needs and provide technical support by bringing national and international expertise to support interventions related to existing objectives.",
+#         "Location": "Cambodia",
+#         "Budget": "The Budget Narrative must contain sufficient detail to allow USAID to understand the proposed costs. The applicant must ensure the budgeted costs address any additional requirements identified in Section F, such as Branding and Marking. The Budget must include Summary Budget, Detailed Budget, and Detailed Budgets for each sub-recipient.",
+#         "Deadline": "August 6, 2024 at 10 a.m. Cambodia time"
 #     }
+# ]
 
 # tool = GoogleSheetTool()
 # print(tool._run(data))

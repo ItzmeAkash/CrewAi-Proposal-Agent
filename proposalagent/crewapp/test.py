@@ -1,101 +1,203 @@
-import os
-import requests
-import re
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
-from crewai_tools import BaseTool
-from dotenv import load_dotenv
+# # from langchain_openai import ChatOpenAI
 
-# Load environment variables from .env file
-load_dotenv()
+# # llm = ChatOpenAI(
+# #     model="gpt-3.5-turbo",
+# #     temperature=0.9
+# # )
 
-# Define the scopes required for accessing Google Drive API
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+# # def rewrite_text(input_text: str, prompt_suffix: str) -> str:
+# #     prompt = input_text + prompt_suffix
+# #     response = llm.invoke(prompt)
+# #     return response.content
 
-def extract_folder_id(folder_link):
-    match = re.search(r'/folders/([^/?]+)', folder_link)
-    if match:
-        return match.group(1)
-    else:
-        raise ValueError("Invalid Google Drive folder link.")
+# # # Initial input text
+# # input_text = """
 
-def extract_folder_name(service, folder_id):
-    folder = service.files().get(fileId=folder_id, fields='name').execute()
-    return folder.get('name')
+# # """
+# # prompt_suffix = ' I want this to more explain each and every thing.'
 
-def download_file_from_google_drive(file_id, destination):
-    URL = "https://docs.google.com/uc?export=download"
-    session = requests.Session()
-    response = session.get(URL, params={'id': file_id}, stream=True)
-    confirmation_token = get_confirm_token(response)
-    if confirmation_token:
-        params = {'id': file_id, 'confirm': confirmation_token}
-        response = session.get(URL, params=params, stream=True)
-    save_response_content(response, destination)
+# # # Get the rewritten text
+# # rewritten_text = rewrite_text(input_text, prompt_suffix)
+# # print(rewritten_text)
 
-def get_confirm_token(response):
-    for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
-            return value
-    return None
+# # # Change the input text and get a new response
+# # input_text = """
+# # New text that you want to rewrite and explain...
+# # """
+# # rewritten_text = rewrite_text(input_text, prompt_suffix)
+# # print(rewritten_text)
 
-def save_response_content(response, destination):
-    CHUNK_SIZE = 32768
-    with open(destination, "wb") as f:
-        for chunk in response.iter_content(CHUNK_SIZE):
-            if chunk:
-                f.write(chunk)
 
-class GoogleDriveDownloaderTool(BaseTool):
-    name: str = "Google Drive Downloader"
-    description: str = "Downloads all files from a specified Google Drive folder."
 
-    def _run(self, folder_link: str) -> str:
-        creds = None
-        # Define the base path to the credentials file
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        CREDENTIALS_PATH = os.path.join(BASE_DIR, 'credentials.json')
-        TOKEN_PATH = os.path.join(BASE_DIR, 'token.json')
-        
+# # #########
 
-        print(f"Credentials Path: {CREDENTIALS_PATH}")
-        print(f"Token Path: {TOKEN_PATH}")
 
-        if os.path.exists(TOKEN_PATH):
-            creds = Credentials.from_authorized_user_file(TOKEN_PATH)
+# # from langchain_openai import ChatOpenAI
 
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-                creds = flow.run_local_server(port=0)
-            with open(TOKEN_PATH, 'w') as token:
-                token.write(creds.to_json())
+# # llm = ChatOpenAI(
+# #     model="gpt-3.5-turbo",
+# #     temperature=0.9
+# # )
 
-        service = build('drive', 'v3', credentials=creds)
-        folder_id = extract_folder_id(folder_link)
-        folder_name = extract_folder_name(service, folder_id)
+# # def rewrite_text(input_text: str, prompt_suffix: str) -> str:
+# #     prompt = input_text + prompt_suffix
+# #     response = llm.invoke(prompt)
+# #     return response.content
 
-        # Define the new path outside the current directory
-        parent_directory = os.path.abspath(os.path.join(BASE_DIR, '../../'))
-        base_destination_folder = os.path.join(parent_directory, 'downloaded')
-        if not os.path.exists(base_destination_folder):
-            os.makedirs(base_destination_folder)
-        destination_folder = os.path.join(base_destination_folder, folder_name)
-        if not os.path.exists(destination_folder):
-            os.makedirs(destination_folder)
+# # # Initial input text
+# # input_text = """
 
-        results = service.files().list(
-            q=f"'{folder_id}' in parents",
-            fields="files(id, name)"
-        ).execute()
-        for file in results.get('files', []):
-            file_id = file.get('id')
-            file_name = file.get('name')
-            destination_path = os.path.join(destination_folder, file_name)
-            download_file_from_google_drive(file_id, destination_path)
-        
-        return f"Files downloaded to {destination_folder}"
+# # """
+# # prompt_suffix = ' I want this to more explain each and every thing.'
+
+# # # Get the rewritten text
+# # rewritten_text = rewrite_text(input_text, prompt_suffix)
+# # print(rewritten_text)
+
+# # # Change the input text and get a new response
+
+
+# result = {
+#     "proposal_result": "hey proposal",
+#     "google_result": "hey google"
+# }
+
+# input_text = result.get("proposal_result")
+
+# print(input_text)
+
+
+from openai import OpenAI
+from langchain_openai import ChatOpenAI
+
+# Initialize the model
+llm = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0.6
+)
+
+def rewrite_text(input_text: str, prompt_suffix: str) -> str:
+    # Construct the prompt with clear instructions
+    prompt = f"""
+    You are an AI assistant here to help with anything requested.
+
+    Input text: {input_text}
+
+    Prompt to change the input text: {prompt_suffix}
+
+    Please combine the input text and the generated result, updating only as specified.
+    """
+
+    # print(prompt)
+    response = llm.invoke(prompt)
+    return response.content.strip()
+
+# Define your input text
+input_text = """
+**[Your Company Name]**
+
+**[Your Company Logo]**
+
+---
+
+**Executive Summary**
+
+Our proposal aims to introduce Boost Reading, a student-led supplemental reading curriculum, to enhance literacy instruction and support student learning across all instructional tiers. Boost Reading offers a comprehensive range of features designed to cater to individual skill development, address remediation needs, and extend core instruction. By leveraging Boost Reading's innovative approach to literacy instruction, educators can effectively support students in improving their reading abilities and achieving academic success.
+
+---
+
+**Table of Contents**
+
+1. Introduction
+2. Program Description
+3. Eligibility Criteria
+4. Application Process
+5. Evaluation Criteria
+6. Budget Information
+7. Conclusion
+
+---
+
+**1. Introduction**
+
+The U.S. Embassy Ethiopia PD Request for Statement of Interest provides a unique opportunity to introduce Boost Reading, a research-based and standards-aligned program, to support literacy development and enhance educational outcomes. This proposal outlines a comprehensive public engagement program that aligns with the objectives of the funding opportunity and aims to strengthen cultural ties between the U.S. and Ethiopia.
+
+---
+
+**2. Program Description**
+
+Boost Reading is a student-led supplemental reading curriculum that offers additional support and reinforcement across all instructional tiers. It serves as a digital assistant in literacy instruction, extending core instruction, addressing remediation needs, and adapting activities for individual skill development. The program employs highly adaptive technology to create individual skill maps for each student, catering to students reading below, at, or above grade level. With Boost Reading, educators can provide personalized practice, benchmark assessments, and engaging narrative experiences to enhance student learning and promote literacy growth.
+
+---
+
+**3. Eligibility Criteria**
+
+- Applicants: U.S. and Ethiopian not-for-profits, educational institutions, and individuals with relevant programming experience.
+- Restrictions: For-profit entities and commercial media organizations are ineligible.
+- Registration: All applicants must have a Unique Entity Identifier (UEI) and be registered on SAM.gov unless exempted.
+
+---
+
+**4. Application Process**
+
+The application process consists of a two-step submission:
+1. Statement of Interest (SOI): Applicants must submit a detailed SOI outlining the proposed program.
+2. Full Proposal: Successful SOIs will be invited to submit a full proposal, including SF-424 forms for federal assistance and detailed budget information.
+
+---
+
+**5. Evaluation Criteria**
+
+Proposals will be evaluated based on the following criteria:
+- Alignment with program objectives
+- Demonstrated impact on literacy development
+- Feasibility and sustainability of the program
+- Budget efficiency and effectiveness
+
+---
+
+**6. Budget Information**
+
+The total funding available for this program is approximately $200,000, with awards ranging from $25,000 to $100,000. Exceptional proposals above $200,000 may be considered based on funding availability.
+
+---
+
+**7. Conclusion**
+
+In conclusion, this proposal introduces Boost Reading as a valuable resource for supporting literacy development and enhancing educational outcomes. By leveraging Boost Reading's research-based approach to literacy instruction, educators can provide students with engaging and effective learning experiences tailored to their individual needs. We believe that our proposed initiatives align with the objectives of the funding opportunity and will have a significant impact on promoting literacy growth and cultural ties between the U.S. and Ethiopia.
+
+---
+
+**[Insert Contact Information]**
+
+---
+
+**[Your Company Logo]**
+"""
+
+# Define your prompt suffix
+prompt_suffix = """
+can you rewrite the consuion
+"""
+
+# Call the function
+rewritten_text = rewrite_text(input_text, prompt_suffix)
+print(rewritten_text)
+
+
+
+
+
+def rewrite_text(input_text: str, prompt_suffix: str) -> str:
+    prompt = f"""
+    You are an AI assistant here to help with anything requested.
+
+    Input text: {input_text}
+
+    Prompt to change the input text: {prompt_suffix}
+
+    Please combine the input text and the prompt_suffix to create a new, cohesive text.
+    """
+    
+    response = llm.invoke(prompt)
+    return response.content

@@ -1,3 +1,4 @@
+#Crew.py
 import os
 from dotenv import load_dotenv
 from crewai import Crew, Process
@@ -10,15 +11,11 @@ import re
 import logging
 load_dotenv()
 
-
 class TenderCrew:
     def __init__(self, folder_link):
         self.folder_link = folder_link
 
     def find_pdf_path(self, directory):
-        """
-        Traverse the directory to find the first PDF file path.
-        """
         for root, dirs, files in os.walk(directory):
             for file in files:
                 if file.endswith('.pdf'):
@@ -26,10 +23,6 @@ class TenderCrew:
         return None
 
     def extract_json_content(self, text):
-        """
-        Extract JSON content from text.
-        """
-        # Use regular expressions to find JSON content
         match = re.search(r'(\{.*\})', text, re.DOTALL)
         if match:
             return match.group(1)
@@ -38,9 +31,6 @@ class TenderCrew:
             return None
 
     def load_json(self, file_path):
-        """
-        Load JSON data from a file, extracting valid JSON if necessary.
-        """
         if not os.path.exists(file_path):
             print(f"File not found: {file_path}")
             return None
@@ -62,9 +52,8 @@ class TenderCrew:
         except json.JSONDecodeError as e:
             print(f"Error loading JSON file: {e}")
             return None
-        
-    #Saving the result as Docx  
-    def save_result_as_docx(self,result_text,file_name):
+
+    def save_result_as_docx(self, result_text, file_name):
         output_folder = os.path.join(os.path.dirname(__file__), 'output')
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
@@ -79,16 +68,15 @@ class TenderCrew:
         # Save the document
         doc.save(output_filename)
         print(f"Docx saved to {output_filename}")
-   
+
     global cur
     cur = "Agents are currently Inactive..."
 
     def get_current_agent():
-        global cur
+        global cur 
         return cur
-    
-    def run_initial(self):
 
+    def run_initial(self):
         agents = TenderPrePreparationAgents()
         tasks = TenderTask()
         global cur
@@ -110,12 +98,8 @@ class TenderCrew:
         initial_crew.kickoff()
 
         # Automatically detect the PDF path
-        # Get the current script directory
         current_directory = os.path.dirname(__file__)
-
-        # Specify the download directory relative to the current script directory
         download_directory = os.path.join(current_directory, 'downloaded')
-
         pdf_path = self.find_pdf_path(download_directory)
         update_progress("Finding PDF Path...")
 
@@ -129,32 +113,27 @@ class TenderCrew:
         # Google Sheet Agent and Task
         google_sheet_organiser_agent = agents.google_sheet_organiser_agent()
         google_sheet_organiser_task = tasks.google_sheet_organiser_task(google_sheet_organiser_agent)
-        
+
         pdf_and_google_sheet_crew = Crew(
             agents=[pdf_extraction_agent, google_sheet_organiser_agent],
             tasks=[pdf_extraction_task, google_sheet_organiser_task],
             verbose=True,
             process=Process.sequential,
         )
-        cur= "Extractor: Agent is currently retrieving data from the PDF."
+        cur = "Extractor: Agent is currently retrieving data from the PDF."
         pdf_and_google_sheet_crew.kickoff()
 
         return pdf_path
 
     def run_final(self):
-
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
         logging.debug("Starting run_final method")
 
         agents = TenderPrePreparationAgents()
         tasks = TenderTask()
-        global cur
-        cur= "Human Intervention"
-        # Proposal Template Agent and Task
         proposal_template_agent = agents.proposal_template_agent()
         proposal_template_task = tasks.proposal_template_task(proposal_template_agent, self.pdf_path)
 
-        # Extract opportunity number from JSON
         json_filename = 'extracted_data.json'
         json_path = os.path.join('crewapp', json_filename)
         json_data = self.load_json(json_path)
@@ -167,42 +146,30 @@ class TenderCrew:
             logging.error("Failed to load JSON data.")
             print("Failed to load JSON data.")
 
-        # Google Sheet Extraction Agent and Task
         data_extract_specialist_agent = agents.data_extract_specialist()
         data_extract_specialist_agent_task = tasks.extract_sheet_task(data_extract_specialist_agent, opportunity_number)
 
         data_extraction_crew = Crew(
-            agents=[
-                data_extract_specialist_agent,
-            ],
-            tasks=[
-                data_extract_specialist_agent_task
-            ],
+            agents=[data_extract_specialist_agent],
+            tasks=[data_extract_specialist_agent_task],
             verbose=True,
             process=Process.sequential,
         )
+        global cur
         cur = "Google Sheet Extractor: Currently processing data retrieval from Google Sheets."
         data_extraction_crew.kickoff()
-                
-        # Proposal Writer Agent and Task
+
         proposal_writer_agent = agents.proposal_writer_agent()
         proposal_writer_task = tasks.proposal_writer_task(proposal_writer_agent)
         proposal_writer_task.context = [data_extract_specialist_agent_task, proposal_template_task]
 
-        # file_path = os.path.join('proposalagent','crewapp', 'excel.txt')
-
-        # Define the file path
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(BASE_DIR, 'excel.txt')
 
-        # Read the file
         with open(file_path, 'r') as file:
             lines = file.readlines()
 
-        # Initialize a dictionary to hold the parsed data
         data = {}
-
-        # Process each line to normalize and parse it
         for line in lines:
             line = line.strip()
             if line.startswith("**"):
@@ -215,40 +182,27 @@ class TenderCrew:
                 key = key.strip()
                 value = value.strip()
 
-                # Check if the key already exists in the dictionary
                 if key not in data:
                     data[key] = value
                 else:
-                    # If the key exists, you can implement a rule to decide which value to keep
-                    # For example, prefer the value from the "**" line over the "-" line
                     if line.startswith("**"):
                         data[key] = value
 
-        # Convert the dictionary into a DataFrame
         exceldf = pd.DataFrame([data])
-        
         exceldf.columns = exceldf.columns.str.replace(r'\W+', '', regex=True).str.lower()
 
-        
-        # Initialize result variable
         result = ""
+        result_dict ={}
 
-        # Check the "Supplier match" condition
-        logging.debug(f"Supplier match: {exceldf['suppliermatch']}, Local partner requirements: {exceldf['localpartnerrequirements']}")
         if exceldf['suppliermatch'].iloc[0].lower() in ['n', 'no'] and exceldf['localpartnerrequirements'].iloc[0].lower() in ['n', 'no']:
-            # prompt = exceldf['Supplierâ€™s Matching Product'][0]
             prompt = exceldf['suppliersmatchingproduct'][0]
-
-            
             google_search_supplier_finder_agent = agents.google_search_supplier_finder_agent()
             google_search_supplier_finder_task = tasks.google_search_supplier_finder_task(google_search_supplier_finder_agent, prompt)
-            
-            
+
             local_search = exceldf['requirementdetails'][0]
             google_search_agent = agents.google_search_agent()
             google_search_task = tasks.google_search_task(google_search_agent, local_search)
-            
-            # Run the Google Search Crew for Supplier Finder
+
             supplier_finder_crew = Crew(
                 agents=[google_search_supplier_finder_agent],
                 tasks=[google_search_supplier_finder_task],
@@ -257,98 +211,89 @@ class TenderCrew:
             )
 
             supplier_result = supplier_finder_crew.kickoff()
-            self.save_result_as_docx(supplier_result,'googlesupplier.docx')
+            self.save_result_as_docx(supplier_result, 'googlesupplier.docx')
             logging.debug(f"Supplier finder result: {supplier_result}")
+            result_dict["Supplier_result"] = supplier_result
             result += "\n\n########################"
             result += "\n## Google Search Supplier Finder Results"
             result += "\n########################\n"
             result += supplier_result
-            
-            # Run the Google Search Crew for Local Partner Requirements
+
             search_crew = Crew(
                 agents=[google_search_agent],
                 tasks=[google_search_task],
                 verbose=True,
                 process=Process.sequential
             )
-            cur="Internet Search Assistant : Actively scanning for local patterns"
+            cur = "Internet Search Assistant: Actively scanning for local patterns"
             search_result = search_crew.kickoff()
-            self.save_result_as_docx(search_result,'googlelocalpartner.docx')
-
+            self.save_result_as_docx(search_result, 'googlelocalpartner.docx')
             logging.debug(f"Google search result: {search_result}")
+            result_dict["google_local_partner"] = search_result
             result += "\n\n########################"
             result += "\n## Google Search Results"
             result += "\n########################\n"
             result += search_result
-            
-        elif exceldf['suppliermatch'].iloc[0].lower() not in ['n', 'no'] and  exceldf['localpartnerrequirements'].iloc[0].lower() in ['n', 'no']:
+
+        elif exceldf['suppliermatch'].iloc[0].lower() not in ['n', 'no'] and exceldf['localpartnerrequirements'].iloc[0].lower() in ['n', 'no']:
             local_search = exceldf['requirementdetails'][0]
-            
+
             proposal_writer_task = tasks.proposal_writer_task(proposal_writer_agent)
             proposal_writer_task.context = [data_extract_specialist_agent_task, proposal_template_task]
-            
+
             google_search_agent = agents.google_search_agent()
             google_search_task = tasks.google_search_task(google_search_agent, local_search)
-            # Run the Proposal Writing Crew
             proposal_crew = Crew(
-                agents=[proposal_template_agent,proposal_writer_agent],
-                tasks=[proposal_template_task,proposal_writer_task],
+                agents=[proposal_template_agent, proposal_writer_agent],
+                tasks=[proposal_template_task, proposal_writer_task],
                 verbose=True,
                 process=Process.sequential
             )
-            cur= "Proposal Writer: Agent is crafting a compelling proposal."
+            cur = "Proposal Writer: Agent is crafting a compelling proposal."
             proposal_result = proposal_crew.kickoff()
-            self.save_result_as_docx(proposal_result,'proposal.docx')
-
+            self.save_result_as_docx(proposal_result, 'proposal.docx')
             logging.debug(f"Proposal writing result: {proposal_result}")
+            result_dict["proposal_result"] = proposal_result
             result += "\n\n########################"
             result += "\n## Proposal Writing Results"
             result += "\n########################\n"
             result += proposal_result
-            
-            
-            # Run the Google Search Crew for Local Partner Requirements
+
             search_crew = Crew(
                 agents=[google_search_agent],
                 tasks=[google_search_task],
                 verbose=True,
                 process=Process.sequential
             )
-            cur="Internet Search Assistant : Actively scanning for local patterns"
+            cur = "Internet Search Assistant: Actively scanning for local patterns"
             search_result = search_crew.kickoff()
-            self.save_result_as_docx(search_result,'googlelocalpartner.docx')
+            self.save_result_as_docx(search_result, 'googlelocalpartner.docx')
             logging.debug(f"Google search result: {search_result}")
+            result_dict["google_local_partner"] = search_result
             result += "\n\n########################"
             result += "\n## Google Search Results"
             result += "\n########################\n"
             result += search_result
-            
-            
-            
+
         elif exceldf['suppliermatch'].iloc[0].lower() not in ['n', 'no'] and exceldf['localpartnerrequirements'].iloc[0].lower() not in ['n', 'no']:
-
-             # Run the Google Search Crew for Supplier Finder
-
             proposal_writer_task = tasks.proposal_writer_task(proposal_writer_agent)
             proposal_writer_task.context = [data_extract_specialist_agent_task, proposal_template_task]
 
-            # Run the Proposal Writing Crew
             proposal_crew = Crew(
-                agents=[proposal_template_agent,proposal_writer_agent],
-                tasks=[proposal_template_task,proposal_writer_task],
+                agents=[proposal_template_agent, proposal_writer_agent],
+                tasks=[proposal_template_task, proposal_writer_task],
                 verbose=True,
                 process=Process.sequential
             )
-            cur= "Proposal Writer: Agent is crafting a compelling proposal."
+            cur = "Proposal Writer: Agent is crafting a compelling proposal."
             proposal_result = proposal_crew.kickoff()
-            self.save_result_as_docx(proposal_result,'proposal.docx')
+            self.save_result_as_docx(proposal_result, 'proposal.docx')
             logging.debug(f"Proposal writing result: {proposal_result}")
+            result_dict["proposal_result"] = proposal_result
             result += "\n\n########################"
             result += "\n## Proposal Writing Results"
             result += "\n########################\n"
             result += proposal_result
 
-
-       
         logging.debug(f"Final result: {result}")
-        return result   
+        return result_dict

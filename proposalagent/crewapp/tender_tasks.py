@@ -34,9 +34,21 @@ class TenderTask:
                 f"Extract the following data from the PDF document located at {pdf_path}: "
                 "Opportunity number, Opportunity name, Opportunity description, Location, Budget, and Deadline."
             ),
-            expected_output=(
-                """A dictionary containing the extracted data fields: "Opportunity number", "Opportunity name", "Opportunity description","Location","Budget", "Deadline"""
-            ),
+             expected_output=(
+            """A dictionary containing the extracted data fields: "Opportunity number", "Opportunity name", "Opportunity description","
+            "Location", "Budget", "Deadline"
+            
+            Example format:
+            {
+                "Opportunity number": "PDS-004-FY2024",
+                "Opportunity name": "U.S. Embassy Ethiopia PD Request for Statement of Interest",
+                "Opportunity description": "This funding opportunity is intended for organizations or individuals to submit a statement of interest to carry out a public engagement program. The program focuses on strengthening cultural ties between the United States and Ethiopia through various programs that promote bilateral cooperation and shared values.",
+                "Location": "Ethiopia",
+                "Budget": "Total amount available is approximately $200,000, pending funding availability. Awards may range from a minimum of $25,000 to a maximum of $100,000. Exceptional proposals above $200,000 may be considered depending on funding availability.",
+                "Deadline": "April 30, 2024 (for the second round of applications)"
+            }
+            """
+        ),
             tools=[self.pdf_search_tool],
             agent=agent,
             output_file=output_file_path,
@@ -59,15 +71,16 @@ class TenderTask:
         output_file_path = os.path.join('crewapp', "excel.txt")
         return Task(
             description=f"Extract only the detail with this {opportunity_number} from the selected data in the Google Sheet",
-            expected_output=(
-                "The details should include Opportunity number ,Supplier match, Supplier’s matching product,Local partner requirements,Requirement details and other relevant information present in the Google Sheet"
-                """for example in .txt file i want all the details in this format
-                    Opportunity number: 
-                    Supplier match: 
-                    Supplier’s matching product: 
-                    Local partner requirements: 
-                    Requirement details: """
-            ),
+        expected_output=(
+            "The details should include Opportunity number, Supplier match, Supplier’s matching product, "
+            "Local partner requirements, Requirement details, and other relevant information present in the Google Sheet. "
+            "The extracted details should be formatted in the .txt file as follows:"
+            "\n\nOpportunity number: <value>\n"
+            "Supplier match: <value>\n"
+            "Supplier’s matching product: <value>\n"
+            "Local partner requirements: <value>\n"
+            "Requirement details: <value>\n"
+        ),
             agent=agent,
             tools=[self.google_sheet_extractor_tool],
             output_file=output_file_path,

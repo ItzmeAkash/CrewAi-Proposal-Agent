@@ -2,7 +2,6 @@
 <html>
 <head>
     <title>Proposal Writing Crew - Human Input</title>
-    <!-- Link to Bootstrap CSS -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -24,9 +23,206 @@
         }
         label {
             margin-top: 10px;
+            cursor: pointer;
+        }
+        .hidden {
+            display: none;
+        }
+        .dropdown-menu {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #loading-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            text-align: center;
+        }
+        #loading-screen .spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spinner {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+        .loading-message {
+            position: absolute;
+            top: 70%;
+            left: 55%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
         }
     </style>
-     <script>
+    <script>
+        function handleSupplierChange() {
+            const supplierSelect = document.getElementById('supplier-match');
+            const productContainer = document.getElementById('supplier-product');
+            const selectedSupplier = supplierSelect.value;
+
+            productContainer.innerHTML = '';
+
+            if (selectedSupplier === 'amplify' || selectedSupplier === 'booker') {
+                const products = selectedSupplier === 'amplify' ? ['Boost Reading', 'mClass'] : ['product1', 'product2'];
+                
+                const dropdown = document.createElement('div');
+                dropdown.className = 'dropdown';
+                
+                const button = document.createElement('button');
+                button.className = 'btn btn-secondary dropdown-toggle';
+                button.type = 'button';
+                button.id = 'dropdownMenuButton';
+                button.setAttribute('data-toggle', 'dropdown');
+                button.setAttribute('aria-haspopup', 'true');
+                button.setAttribute('aria-expanded', 'false');
+                button.textContent = 'Select Products';
+
+                const dropdownMenu = document.createElement('div');
+                dropdownMenu.className = 'dropdown-menu';
+                dropdownMenu.setAttribute('aria-labelledby', 'dropdownMenuButton');
+
+                products.forEach(product => {
+                    const checkboxWrapper = document.createElement('div');
+                    checkboxWrapper.className = 'dropdown-item';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'supplier_product[]';
+                    checkbox.value = product;
+                    checkbox.id = product;
+
+                    const label = document.createElement('label');
+                    label.htmlFor = product;
+                    label.textContent = product.charAt(0).toUpperCase() + product.slice(1);
+                    label.style.marginLeft = '5px';
+                    label.title = 'Brief description or additional information about ' + product;
+
+                    label.addEventListener('click', function() {
+                        checkbox.checked = !checkbox.checked;
+                        updateDropdownButton();
+                    });
+
+                    checkboxWrapper.appendChild(checkbox);
+                    checkboxWrapper.appendChild(label);
+                    dropdownMenu.appendChild(checkboxWrapper);
+
+                    checkbox.addEventListener('change', function() {
+                        updateCombinedMessage();
+                        updateDropdownButton();
+                    });
+                });
+
+                dropdown.appendChild(button);
+                dropdown.appendChild(dropdownMenu);
+                productContainer.appendChild(dropdown);
+            } else if (selectedSupplier === 'no') {
+                const textField = document.createElement('input');
+                textField.type = 'text';
+                textField.className = 'form-control';
+                textField.placeholder = 'Enter other product';
+                textField.id = 'other-product';
+                textField.name = 'other_product';
+                productContainer.appendChild(textField);
+
+                textField.addEventListener('input', updateCombinedMessage);
+            } else {
+                const placeholderMessage = document.createElement('p');
+                placeholderMessage.textContent = 'Please select a supplier to see matching products.';
+                placeholderMessage.className = 'text-muted';
+                productContainer.appendChild(placeholderMessage);
+            }
+        }
+
+        function updateDropdownButton() {
+            const button = document.getElementById('dropdownMenuButton');
+            const checkboxes = document.querySelectorAll('#supplier-product input[type="checkbox"]:checked');
+            const selectedItems = Array.from(checkboxes).map(checkbox => checkbox.value.charAt(0).toUpperCase() + checkbox.value.slice(1));
+
+            if (selectedItems.length > 0) {
+                button.textContent = selectedItems.join(', ');
+            } else {
+                button.textContent = 'Select Products';
+            }
+        }
+
+        function updateCombinedMessage() {
+            const checkboxes = document.querySelectorAll('#supplier-product input[type="checkbox"]:checked');
+            const selectedMessages = Array.from(checkboxes).map(checkbox => {
+                if (checkbox.value === 'Boost Reading') {
+                    return "1. Boost Reading is a student-led supplemental reading curriculum that offers additional support and reinforcement across all instructional tiers. It serves as a digital assistant in literacy instruction, extending core instruction, addressing remediation needs, and adapting activities for individual skill development. 2. Proven Results: In just 30 minutes of use per week, Boost Reading has shown significant improvements in results on all DIBELS 8th Edition measures. It has also increased the number of students on track for reading success in grades K–5, meeting ESSA’s Moderate (Tier 2) Evidence criteria. Notably, nearly 65% of Boost Reading kindergarten students identified as 'at-risk' at the start of the year ended the year at benchmark or above. 3. Personalized Practice: Boost Reading employs highly adaptive technology to create individual skill maps for each student. It caters to students reading below, at, or above grade level, providing simultaneous remediation and advancement in different skill domains. It is an effective component of remediation and intervention solutions, offering explicit instruction for all students, including those with dyslexia or in special education classes. 4. Boost Lectura: Boost Reading's Spanish literacy partner, Boost Lectura, supports Spanish-speaking emergent bilinguals in their native language. When used together, these programs drive literacy growth in both English and Spanish, providing teachers with side-by-side reporting on skill progression in both languages. 5. Science of Reading Foundation: Boost Reading is built on the Science of Reading foundation, incorporating explicit instruction in phonics, phonological awareness, comprehension, vocabulary, and other critical skills necessary for fluent and confident reading. 6. Benchmark Assessments and Skill Scans: Built-in benchmark assessments measure student proficiency at the beginning, middle, and end of the year. Curioso Skill Scans measure monthly growth without interrupting engagement. These assessments provide teachers with actionable insights into students' reading journeys and ensure meaningful progress in their literacy development. 7. Engaging Narrative: Boost Reading offers a personalized journey through a riveting story world that evolves as students progress. With quests, emotionally engaging characters, and a narrative that intrinsically motivates, Boost Reading creates an immersive reading experience. 8. Research-based and Standards Aligned: Boost Reading is a research-based and standards-aligned program that supports students along an adaptive path of increasingly complex texts and literary concepts. It offers more than 50 mini-games that build skills in phonics, phonological awareness, vocabulary, microcomprehension, and macrocomprehension. By leveraging Boost Reading's unique features and value propositions, educators can provide students with engaging and effective literacy instruction tailored to their individual needs.";
+                } else if (checkbox.value === 'mClass') {
+                    return 'mClass';
+                } else if (checkbox.value === 'product1') {
+                    return 'math is mathematics';
+                } else if (checkbox.value === 'product2') {
+                    return 'chatbot is the llm';
+                }
+                return '';
+            }).filter(message => message !== '');
+
+            const otherProduct = document.getElementById('other-product');
+            if (otherProduct && otherProduct.value) {
+                selectedMessages.push(otherProduct.value);
+            }
+
+            const combinedMessage = selectedMessages.join(', ');
+            document.getElementById('combined-message').value = combinedMessage;
+        }
+
+        function handleLocalPartnerChange() {
+            const localPartnerSelect = document.getElementById('local-partner');
+            const requirementDetailsContainer = document.getElementById('requirement-details-container');
+            const requirementDetailsTextarea = document.getElementById('requirement-details');
+            
+            if (localPartnerSelect.value === 'yes') {
+                requirementDetailsContainer.classList.add('hidden');
+                requirementDetailsTextarea.value = 'no';
+            } else {
+                requirementDetailsContainer.classList.remove('hidden');
+            }
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const feedback = form.elements['feedback'].value.trim();
+            
+            if (feedback.toLowerCase() !== 'done') {
+                alert("Please type 'done' to proceed.");
+                return;
+            }
+
+            form.submit();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            handleSupplierChange();
+            handleLocalPartnerChange();
+
+            const form = document.getElementById('submission-form');
+            form.addEventListener('submit', handleSubmit);
+
+            form.addEventListener('submit', showLoadingScreen);
+        });
+
+
+        
         function fetchAgentStatus() {
             fetch("{% url 'agent_status' %}")
                 .then(response => response.json())
@@ -35,29 +231,79 @@
                 });
         }
 
+        function removeErrorMessage() {
+            var errorMessage = document.getElementById('error-message');
+            if (errorMessage) {
+                errorMessage.remove();
+            }
+        }
+
         setInterval(fetchAgentStatus, 2000); 
+
+        function showLoadingScreen() {
+            document.getElementById('loading-screen').style.display = 'block';
+        }
+    
     </script>
 </head>
 <body>
     <div class="container">
         <h1>Review and Update Data</h1>
-        <h4>Current Working Agent</h4>
+
         {% if error_message %}
         <div class="alert alert-danger" role="alert">
             {{ error_message }}
         </div>
-    {% endif %}
-        <p id="current-agent">Human Intervention</p>
-        <iframe width="100%" height="500" src="https://docs.google.com/spreadsheets/d/1_k2DzIMttt7PvXg-V40_soNH6dA2-E8dG06T2uIhFgA/edit?gid=1002171032#gid=1002171032"></iframe>
-
-        <form method="post">
+        {% endif %}
+        
+        
+        <div>
+            {% if result %}
+                {{ result|safe }}
+            {% endif %}
+        </div>
+        
+        <form id="submission-form" method="post" onsubmit="removeErrorMessage()">
             {% csrf_token %}
             <div class="form-group">
-                <label for="feedback">Please review the data and type 'done' when finished:</label>
-                <textarea class="form-control" id="feedback" name="feedback" rows="5"></textarea>
+                <label for="supplier-match">Supplier match</label>
+                <select class="form-control" id="supplier-match" name="Supplier match" onchange="handleSupplierChange()" required>
+                    <option value="" disabled selected>Select a supplier</option>
+                    <option value="amplify">Amplify</option>
+                    <option value="booker">Booker</option>
+                    <option value="no">no</option>
+                </select>
             </div>
+            <div class="form-group">
+                <label for="supplier-product">Supplier’s matching product</label>
+                <div id="supplier-product"></div>
+            </div>
+            <div class="form-group">
+                <label for="local-partner">Local partner requirements</label>
+                <select class="form-control" id="local-partner" name="Local partner requirements" onchange="handleLocalPartnerChange()" required>
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                </select>
+            </div>
+            <div class="form-group hidden" id="requirement-details-container">
+                <label for="requirement-details">Requirement details</label>
+                <textarea class="form-control" id="requirement-details" name="Requirement details" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="feedback">Please review the data and type 'done' when finished:</label>
+                <textarea class="form-control" id="feedback" name="feedback" rows="5" required></textarea>
+            </div>
+            <input type="hidden" id="combined-message" name="Supplier’s matching product" value="" required>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
+
     </div>
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <p id="current-agent" class="loading-message">Human Intervention Done.. Please Wait</p>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 </body>
 </html>

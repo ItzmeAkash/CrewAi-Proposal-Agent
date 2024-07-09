@@ -2,12 +2,11 @@
 <html>
 <head>
     <title>Proposal Writing Crew - Result</title>
-    <!-- Link to Bootstrap CSS -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #f8f9fa;
-            /* align-items: center; */
             height: 100vh;
         }
         .container {
@@ -45,7 +44,6 @@
             background-color: #1e83f0;
             color: white;
             text-decoration: none;
-
         }
         .download-btn {
             display: inline-block;
@@ -60,16 +58,51 @@
             background-color: #218838;
             color: white;
             text-decoration: none;
-
+        }
+        .send-btn {
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 50%;
+            padding: 10px 16px;
+            border: none;
+            cursor: pointer;
+        }
+        .send-btn i {
+            font-size: 16px;
+        }
+        .send-btn:hover {
+            background-color: #0056b3;
+        }
+        .col-3-custom {
+            max-width: 8%;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Here is the Final Result</h1>
-        <pre>{{ result }}</pre>
+        {% for key, value in result.items %}
+        <h3>{{ key }}</h3>
+        <pre>{{ value }}</pre>
+        {% endfor %}
+        
+        <form method="POST" action="{% url 'update_proposal' %}">
+            {% csrf_token %}
+            <div class="form-group row justify-content-center">
+                <div class="col-9">
+                    <input type="text" class="form-control" id="prompt" name="prompt" placeholder="Enter your prompt">
+                </div>
+                <div class="col-3 d-flex align-items-center justify-content-center col-3-custom">
+                    <button type="submit" class="send-btn"><i class="fas fa-arrow-up"></i></button>
+                </div>
+            </div>
+            
+        </form>
+        
         <a href="/">Back</a>
         <a href="{% url 'download_files' %}" class="download-btn">Download All Files</a>
     </div>
 </body>
 </html>
+
+
